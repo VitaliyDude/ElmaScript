@@ -921,10 +921,16 @@ namespace EleWise.ELMA.Model.Scripts
         /// <param name="lab"></param>
         public void UpdateListForums(Context context, EleWise.ELMA.ConfigurationModel.Podrazdeleniya lab)
         {
-            var metric = GetOrCreateMetrick(lab, METRIC_SCIENCE_EVENT_LIST_EXHIBITIONS);
-            metric.Znachenie = "";
-            context.Pokazateli.Last().PokazateliLaboratorii.Add(metric);
-            UpdateHistoryMetric(lab, metric.Pokazatelj, metric.Znachenie);
+            var metric = GetOrCreateMetrick (lab, METRIC_SCIENCE_EVENT_LIST_EXHIBITIONS);
+			var vystavki = PublicAPI.Objects.UserObjects.UserMeropriyatiya.Find(string.Format("NOT (Uchastniki is NULL) and Podrazdelenie = {0}", lab.Id)).ToList().OrderBy(x => x.Nazvanie);
+			string result = "";
+			foreach (var element in vystavki)
+			{
+				result += element.Nazvanie + ", " + element.Vid + ", " + element.Gorod + ", " + element.Gorod.Country + ", " + element.SrokiMeropriyatiya + ";" + Environment.NewLine;
+			}
+			metric.Znachenie = result;
+			context.Pokazateli.Last().PokazateliLaboratorii.Add(metric);
+			UpdateHistoryMetric (lab, metric.Pokazatelj, metric.Znachenie);
         }
 
 
@@ -944,10 +950,13 @@ namespace EleWise.ELMA.Model.Scripts
         /// </summary>
         public void UpdateStudentInNIOKTR(Context context, EleWise.ELMA.ConfigurationModel.Podrazdeleniya lab)
         {
-            var metric = GetOrCreateMetrick(lab, METRIC_NIOKTR_COUNT_STUDENTS);
-            metric.Znachenie = "0";
-            context.Pokazateli.Last().PokazateliLaboratorii.Add(metric);
-            UpdateHistoryMetric(lab, metric.Pokazatelj, metric.Znachenie);
+
+            var metric = GetOrCreateMetrick (lab, METRIC_NIOKTR_COUNT_DOGOVOR);
+			var NIOKTR = PublicAPI.Objects.UserObjects.UserUchastieVNIOKTR.Find(string.Format("Laboratoriya = {0} and (CreationDate >= DateTime({1}, 1, 1) ) and (CreationDate < DateTime({2}, 1, 1))", lab.Id, DateTime.Now.Year,  DateTime.Now.Year + 1)).ToList().OrderBy(x => x.Naimenovanie);
+			metric.Znachenie = NIOKTR.Count().ToString();
+			context.Pokazateli.Last().PokazateliLaboratorii.Add(metric);
+			UpdateHistoryMetric (lab, metric.Pokazatelj, metric.Znachenie);
+
         }
 
 
@@ -956,20 +965,36 @@ namespace EleWise.ELMA.Model.Scripts
         #region Показатели Заказчики
         public void UpdateMetricCustomers(Context context, EleWise.ELMA.ConfigurationModel.Podrazdeleniya lab)
         {
-            var metric = GetOrCreateMetrick(lab, METRIC_CUSTOMERS);
-            metric.Znachenie = "";
-            context.Pokazateli.Last().PokazateliLaboratorii.Add(metric);
-            UpdateHistoryMetric(lab, metric.Pokazatelj, metric.Znachenie);
+
+            var metric = GetOrCreateMetrick (lab, METRIC_CUSTOMERS);
+			var NIOKTR = PublicAPI.Objects.UserObjects.UserUchastieVNIOKTR.Find(string.Format("Laboratoriya = {0} and NOT (Zakazchik is NULL)", lab.Id)).ToList().GroupBy(x => x.Zakazchik);
+			string result = "";
+			foreach(var element in NIOKTR)
+			{
+				result += element.Key.Naimenovanie + ";" + Environment.NewLine;
+			}
+			metric.Znachenie = result;
+			context.Pokazateli.Last().PokazateliLaboratorii.Add(metric);
+			UpdateHistoryMetric (lab, metric.Pokazatelj, metric.Znachenie);
+
         }
         #endregion
 
         #region Показатели NIOKTR
         public void UpdateMetricNIOKTR(Context context, EleWise.ELMA.ConfigurationModel.Podrazdeleniya lab)
         {
-            var metric = GetOrCreateMetrick(lab, METRIC_NIOKTR_RESULT);
-            metric.Znachenie = "";
-            context.Pokazateli.Last().PokazateliLaboratorii.Add(metric);
-            UpdateHistoryMetric(lab, metric.Pokazatelj, metric.Znachenie);
+
+            var metric = GetOrCreateMetrick (lab, METRIC_NIOKTR_RESULT);
+			var NIOKTR = PublicAPI.Objects.UserObjects.UserUchastieVNIOKTR.Find(string.Format("Laboratoriya = {0} and NOT (OpisanieRezuljtatovPoluchennyhVHodeRealizaciiNIOKTR is NULL)", lab.Id)).ToList().GroupBy(x => x.OpisanieRezuljtatovPoluchennyhVHodeRealizaciiNIOKTR);
+			string result = "";
+			foreach(var element in NIOKTR)
+			{
+				result += element.Key + ";" + Environment.NewLine;
+			}
+			metric.Znachenie = result;
+			context.Pokazateli.Last().PokazateliLaboratorii.Add(metric);
+			UpdateHistoryMetric (lab, metric.Pokazatelj, metric.Znachenie);
+
         }
         #endregion
 
